@@ -88,44 +88,41 @@ const AddTask = ({ open, setOpen, task }) => {
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
   const URLS = task?.assets ? [...task.assets] : [];
 
-  const handleOnSubmit = async (data) => {
-    for (const file of assets) {
-      setUploading(true);
-      try {
-        await uploadFile(file);
-      } catch (error) {
-        console.error("Error uploading file:", error.message);
-        return;
-      } finally {
-        setUploading(false);
-      }
-    }
+   const handleOnSubmit = async (data) => {
+     for (const file of assets) {
+       setUploading(true);
+       try {
+         await uploadFile(file);
+       } catch (error) {
+         console.warn("File upload failed (optional), continuing without attachment:", error.message);
+       } finally {
+         setUploading(false);
+       }
+     }
 
-    try {
-      const newData = {
-        ...data,
-        assets: [...URLS, ...uploadedFileURLs],
-        team,
-        stage,
-        priority,
-      };
-      console.log(data, newData);
-      const res = task?._id
-        ? await updateTask({ ...newData, _id: task._id }).unwrap()
-        : await createTask(newData).unwrap();
+     try {
+       const newData = {
+         ...data,
+         assets: [...URLS, ...uploadedFileURLs],
+         team,
+         stage,
+         priority,
+       };
+       console.log(data, newData);
+       const res = task?._id
+         ? await updateTask({ ...newData, _id: task._id }).unwrap()
+         : await createTask(newData).unwrap();
 
-      toast.success(res.message);
+       toast.success(res.message);
 
-      setTimeout(() => {
-        setOpen(false);
-      }, 500);
-    } catch (err) {
-      console.log(err);
-      toast.error(err?.data?.message || err.error);
-    }
-  };
-
-  const handleSelect = (e) => {
+       setTimeout(() => {
+         setOpen(false);
+       }, 500);
+     } catch (err) {
+       console.log(err);
+       toast.error(err?.data?.message || err.error);
+     }
+   };  const handleSelect = (e) => {
     setAssets(e.target.files);
   };
 

@@ -45,7 +45,8 @@ const Tasks = () => {
       <div className='flex items-center justify-between mb-4'>
         <Title title={status ? `${status} Tasks` : "Tasks"} />
 
-        {!status && user?.isAdmin && (
+        {/* Show create task to any authenticated user so the button is always visible */}
+        {!status && user && (
           <Button
             label='Create Task'
             icon={<IoMdAdd className='text-lg' />}

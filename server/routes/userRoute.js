@@ -20,7 +20,8 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 
-router.get("/get-team", protectRoute, isAdminRoute, getTeamList);
+// Allow any authenticated user to get team list (was admin-only)
+router.get("/get-team", protectRoute, getTeamList);
 router.get("/notifications", protectRoute, getNotificationsList);
 router.get("/get-status", protectRoute, isAdminRoute, getUserTaskStatus);
 
