@@ -1,10 +1,4 @@
 import { Dialog } from "@headlessui/react";
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
-} from "firebase/storage";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { BiImages } from "react-icons/bi";
@@ -13,9 +7,9 @@ import { toast } from "sonner";
 import {
   useCreateTaskMutation,
   useUpdateTaskMutation,
+  useGetAllTaskQuery,
 } from "../../redux/slices/api/taskApiSlice";
 import { dateFormatter } from "../../utils";
-import { app } from "../../utils/firebase";
 import Button from "../Button";
 import Loading from "../Loading";
 import ModalWrapper from "../ModalWrapper";
@@ -29,37 +23,39 @@ const PRIORIRY = ["HIGH", "MEDIUM", "NORMAL", "LOW"];
 const uploadedFileURLs = [];
 
 const uploadFile = async (file) => {
-  const storage = getStorage(app);
+  // Use backend proxy endpoint instead of direct Firebase upload
+  const formData = new FormData();
+  formData.append("file", file);
 
-  const name = new Date().getTime() + file.name;
-  const storageRef = ref(storage, name);
+  try {
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
 
-  const uploadTask = uploadBytesResumable(storageRef, file);
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
 
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        console.log("Uploading");
-      },
-      (error) => {
-        reject(error);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref)
-          .then((downloadURL) => {
-            uploadedFileURLs.push(downloadURL);
-            resolve();
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      }
-    );
-  });
+    const data = await response.json();
+    if (data.status && data.url) {
+      uploadedFileURLs.push(data.url);
+    } else {
+      throw new Error(data.message || "Upload failed");
+    }
+  } catch (error) {
+    throw error;
+  }
 };
 
 const AddTask = ({ open, setOpen, task }) => {
+  const { refetch: refetchTasks } = useGetAllTaskQuery({
+    strQuery: "",
+    isTrashed: "",
+    search: "",
+  });
+  
   const defaultValues = {
     title: task?.title || "",
     date: dateFormatter(task?.date || new Date()),
@@ -89,6 +85,7 @@ const AddTask = ({ open, setOpen, task }) => {
   const URLS = task?.assets ? [...task.assets] : [];
 
    const handleOnSubmit = async (data) => {
+     // Try to upload files if selected
      for (const file of assets) {
        setUploading(true);
        try {
@@ -113,11 +110,14 @@ const AddTask = ({ open, setOpen, task }) => {
          ? await updateTask({ ...newData, _id: task._id }).unwrap()
          : await createTask(newData).unwrap();
 
-       toast.success(res.message);
+      toast.success(res.message);
 
-       setTimeout(() => {
-         setOpen(false);
-       }, 500);
+      // Refetch tasks to update UI with new task
+      refetchTasks();
+
+      setTimeout(() => {
+        setOpen(false);
+      }, 500);
      } catch (err) {
        console.log(err);
        toast.error(err?.data?.message || err.error);

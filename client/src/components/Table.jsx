@@ -139,6 +139,28 @@ const Table = ({ tasks }) => {
     </tr>
   );
 
+  // Group tasks by stage
+  const groupedTasks = {
+    todo: tasks?.filter(task => task.stage === "todo") || [],
+    "in progress": tasks?.filter(task => task.stage === "in progress") || [],
+    completed: tasks?.filter(task => task.stage === "completed") || [],
+  };
+
+  const renderTaskGroup = (title, stageTasks) => (
+    stageTasks.length > 0 && (
+      <React.Fragment>
+        <tr className='bg-gray-100'>
+          <td colSpan='6' className='py-3 px-2 font-bold text-gray-700 uppercase text-sm'>
+            {title} ({stageTasks.length})
+          </td>
+        </tr>
+        {stageTasks.map((task, index) => (
+          <TableRow key={index} task={task} />
+        ))}
+      </React.Fragment>
+    )
+  );
+
   return (
     <>
       <div className='bg-white  px-2 md:px-4 pt-4 pb-9 shadow-md rounded'>
@@ -146,8 +168,9 @@ const Table = ({ tasks }) => {
           <table className='w-full '>
             <TableHeader />
             <tbody>
-              {tasks.map((task, index) => (
-                <TableRow key={index} task={task} />
+              {renderTaskGroup("To Do", groupedTasks.todo)}
+              {renderTaskGroup("In Progress", groupedTasks["in progress"])}
+              {renderTaskGroup("Completed", groupedTasks.completed)}
               ))}
             </tbody>
           </table>

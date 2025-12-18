@@ -26,7 +26,7 @@ const Tasks = () => {
   const status = params?.status || "";
 
   const { data, isLoading, refetch } = useGetAllTaskQuery({
-    strQuery: status,
+    strQuery: "",  // Fetch all tasks first
     isTrashed: "",
     search: searchTerm,
   });
@@ -34,7 +34,27 @@ const Tasks = () => {
   useEffect(() => {
     refetch();
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, [open]);
+  }, [open, status]);
+
+  // Filter tasks based on the selected status from sidebar
+  const getFilteredTasks = () => {
+    if (!status) {
+      // Show all tasks when on main tasks page
+      return data?.tasks || [];
+    }
+
+    // Map URL status to task stage values
+    const stageMap = {
+      "completed": "completed",
+      "in-progress": "in progress",
+      "todo": "todo"
+    };
+
+    const targetStage = stageMap[status];
+    return data?.tasks?.filter(task => task.stage === targetStage) || [];
+  };
+
+  const filteredTasks = getFilteredTasks();
 
   return isLoading ? (
     <div className='py-10'>
@@ -43,10 +63,10 @@ const Tasks = () => {
   ) : (
     <div className='w-full'>
       <div className='flex items-center justify-between mb-4'>
-        <Title title={status ? `${status} Tasks` : "Tasks"} />
+        <Title title={status ? `${status.replace('-', ' ')} Tasks` : "Tasks"} />
 
-        {/* Show create task to any authenticated user so the button is always visible */}
-        {!status && user && (
+        {/* Show create task button */}
+        {user && (
           <Button
             label='Create Task'
             icon={<IoMdAdd className='text-lg' />}
@@ -70,9 +90,9 @@ const Tasks = () => {
           )}
 
           {selected === 0 ? (
-            <BoardView tasks={data?.tasks} />
+            <BoardView tasks={filteredTasks} />
           ) : (
-            <Table tasks={data?.tasks} />
+            <Table tasks={filteredTasks} />
           )}
         </Tabs>
       </div>

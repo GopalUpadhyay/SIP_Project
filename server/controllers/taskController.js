@@ -6,13 +6,16 @@ import User from "../models/userModel.js";
 const createTask = asyncHandler(async (req, res) => {
   try {
     const { userId } = req.user;
-    const { title, team, stage, date, priority, assets, links, description } =
+    const { title, team = [], stage, date, priority, assets, links, description } =
       req.body;
+
+    // Always include the creator in the task team for visibility
+    const teamWithCreator = Array.from(new Set([userId, ...team]));
 
     //alert users of the task
     let text = "New task has been assigned to you";
-    if (team?.length > 1) {
-      text = text + ` and ${team?.length - 1} others.`;
+    if (teamWithCreator?.length > 1) {
+      text = text + ` and ${teamWithCreator?.length - 1} others.`;
     }
 
     text =
@@ -34,7 +37,7 @@ const createTask = asyncHandler(async (req, res) => {
 
     const task = await Task.create({
       title,
-      team,
+      team: teamWithCreator,
       stage: stage.toLowerCase(),
       date,
       priority: priority.toLowerCase(),
@@ -45,13 +48,13 @@ const createTask = asyncHandler(async (req, res) => {
     });
 
     await Notice.create({
-      team,
+      team: teamWithCreator,
       text,
       task: task._id,
     });
 
     const users = await User.find({
-      _id: team,
+      _id: teamWithCreator,
     });
 
     if (users) {

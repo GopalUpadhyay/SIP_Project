@@ -23,6 +23,6 @@ const baseQuery = async (args, api, extraOptions) => {
 
 export const apiSlice = createApi({
   baseQuery,
-  tagTypes: [],
+  tagTypes: ["Tasks", "Dashboard"],
   endpoints: (builder) => ({}),
 });

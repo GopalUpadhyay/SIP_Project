@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
+import multer from "multer";
 import { errorHandler, routeNotFound } from "./middleware/errorMiddleware.js";
 import routes from "./routes/index.js";
 import dbConnection from "./utils/connectDB.js";
@@ -34,6 +35,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
+
+// Configure multer for file uploads (store in memory)
+const upload = multer({ storage: multer.memoryStorage() });
+app.use("/api/upload", upload.single("file"));
 
 //app.use(morgan("dev"));
 app.use("/api", routes);

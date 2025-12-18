@@ -36,14 +36,16 @@ const Card = ({ label, count, bg, icon }) => {
 };
 
 const Dashboard = () => {
-  const { data, isLoading, error } = useGetDasboardStatsQuery();
+  const { data, isLoading, error, refetch } = useGetDasboardStatsQuery();
   const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, []);
+    // Refetch dashboard stats when component mounts to ensure fresh data
+    refetch();
+  }, [refetch]);
 
-  const totals = data?.tasks || [];
+  const totals = data?.tasks || {};
 
   if (isLoading)
     return (
@@ -63,23 +65,23 @@ const Dashboard = () => {
     {
       _id: "2",
       label: "COMPLTED TASK",
-      total: totals["completed"] || 0,
+      total: totals?.completed || 0,
       icon: <MdAdminPanelSettings />,
       bg: "bg-[#0f766e]",
     },
     {
       _id: "3",
       label: "TASK IN PROGRESS ",
-      total: totals["in progress"] || 0,
+      total: totals?.["in progress"] || 0,
       icon: <LuClipboardEdit />,
       bg: "bg-[#f59e0b]",
     },
     {
       _id: "4",
       label: "TODOS",
-      total: totals["todo"],
+      total: totals?.todo || 0,
       icon: <FaArrowsToDot />,
-      bg: "bg-[#be185d]" || 0,
+      bg: "bg-[#be185d]",
     },
   ];
 
